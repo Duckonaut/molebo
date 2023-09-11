@@ -53,7 +53,7 @@ typedef struct args {
 
 args_t parse_args(int argc, char* argv[]) {
     args_t args = {
-        .texture_size = 256,
+        .texture_size = 0,
         .input = NULL,
         .output = NULL,
     };
@@ -98,6 +98,40 @@ int main(int argc, char* argv[]) {
         printf("Error: failed to load mesh\n");
         return EXIT_FAILURE;
     }
+
+    char* meta = malloc(strlen(args.input) + 2);
+    char* ext = strrchr(args.input, '.');
+    memcpy(meta, args.input, ext - args.input);
+    strcpy(meta + (ext - args.input), ".meta");
+
+    FILE* meta_file = fopen(meta, "r");
+
+    if (!meta_file) {
+        if (args.texture_size == 0) {
+            args.texture_size = 256;
+        }
+    } else {
+        // meta file syntax:
+        // texture_size: 256
+        //
+        if (args.texture_size == 0) {
+            char line[256];
+            size_t len = 0;
+
+            while ((fgets(line, sizeof(line) - 1, meta_file)) != NULL) {
+                if (strncmp(line, "texture_size", 12) == 0) {
+                    args.texture_size = atoi(line + 13);
+                    break;
+                }
+            }
+
+            if (args.texture_size == 0) {
+                args.texture_size = 256;
+            }
+        }
+    }
+
+    fclose(meta_file);
 
     FILE* output = fopen(args.output, "wb");
 
