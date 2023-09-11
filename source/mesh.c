@@ -20,7 +20,6 @@ void mesh_load_nmsh(mesh_t* mesh, const u8* data) {
 }
 
 void mesh_draw(const mesh_t* mesh) {
-    glPolyFmt(POLY_ALPHA(31) | POLY_CULL_NONE);
     glNormal3f(0.0f, 0.0f, 1.0f);
     glBegin(mesh->mode);
     for (usize i = 0; i < mesh->index_len; i++) {

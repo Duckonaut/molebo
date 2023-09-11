@@ -25,39 +25,25 @@ enum GL_TEXTURE_SIZE_ENUM texture_size_decode(u16 size) {
 }
 
 texture_handle texture_load(const u8* data) {
-    rgb* texture_bin = (rgb*)data;
-
     // validate magic (NRGB)
     const u8 magic[4] = { 'N', 'R', 'G', 'B' };
-    if (memcmp(texture_bin, magic, 4) != 0) {
+    if (memcmp(data, magic, 4) != 0) {
         iprintf("Error: invalid magic\n");
         return 0;
     }
 
     enum GL_TEXTURE_SIZE_ENUM width, height;
 
-    width = texture_size_decode(texture_bin[4] | (texture_bin[5] << 8));
-    height = texture_size_decode(texture_bin[6] | (texture_bin[7] << 8));
+    width = texture_size_decode(data[4] | (data[5] << 8));
+    height = texture_size_decode(data[6] | (data[7] << 8));
 
     texture_handle tex;
     glGenTextures(1, &tex);
     glBindTexture(0, tex);
-    glLight(0, RGB15(31, 31, 31), floattov10(0.0f), floattov10(0.0f), floattov10(-1.0f));
 
+    rgb* texture_bin = (rgb*)(data + 8);
 
-    glTexImage2D(
-        0,
-        0,
-        GL_RGB,
-        width,
-        height,
-        0,
-        TEXGEN_TEXCOORD,
-        (u8*)texture_bin + 8
-    );
-
-    glBindTexture(0, 0);
+    glTexImage2D(0, 0, GL_RGBA, width, height, 0, TEXGEN_TEXCOORD, (u8*)texture_bin);
 
     return tex;
 }
-
