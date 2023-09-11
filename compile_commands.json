@@ -1,0 +1,29 @@
+[
+  {
+    "arguments": [
+      "/opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc",
+      "-g",
+      "-Wall",
+      "-O2",
+      "-march=armv5te",
+      "-mtune=arm946e-s",
+      "-fno-gcse",
+      "-ffast-math",
+      "--no-standard-includes",
+      "-I/home/duckonaut/repos/ds/coolshit/include",
+      "-I/opt/devkitpro/libnds/include",
+      "-I/opt/devkitpro/libnds/include",
+      "-I/opt/devkitpro/devkitARM/arm-none-eabi/include",
+      "-I/opt/devkitpro/devkitARM/lib/gcc/arm-none-eabi/13.2.0/include",
+      "-I/home/duckonaut/repos/ds/coolshit/build",
+      "-DARM9",
+      "-c",
+      "-o",
+      "main.o",
+      "/home/duckonaut/repos/ds/coolshit/source/main.c"
+    ],
+    "directory": "/home/duckonaut/repos/ds/coolshit/build",
+    "file": "/home/duckonaut/repos/ds/coolshit/source/main.c",
+    "output": "/home/duckonaut/repos/ds/coolshit/build/main.o"
+  }
+]
