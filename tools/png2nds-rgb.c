@@ -15,7 +15,7 @@ typedef uint64_t u64;
 
 typedef u16 rgb;
 
-#define RGB(r, g, b) ((r >> 3) | ((g >> 3) << 5) | ((b >> 3) << 10))
+#define ARGB(a, r, g, b) (((a > 0) ? 1 << 15 : 0) | (r >> 3) | ((g >> 3) << 5) | ((b >> 3) << 10))
 
 int usage() {
     printf("Usage: png2nds-rgb <input.png> <output.nrgb>\n");
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
     }
 
     int width, height, channels;
-    u8* data = stbi_load(argv[1], &width, &height, &channels, 3);
+    u8* data = stbi_load(argv[1], &width, &height, &channels, 4);
 
     if (!data) {
         printf("Error: could not load image\n");
@@ -80,11 +80,12 @@ int main(int argc, char* argv[]) {
     fwrite(&height, 1, 2, output);
 
     for (int i = 0; i < width * height; i++) {
-        u8 r = data[i * 3];
-        u8 g = data[i * 3 + 1];
-        u8 b = data[i * 3 + 2];
+        u8 r = data[i * 4];
+        u8 g = data[i * 4 + 1];
+        u8 b = data[i * 4 + 2];
+        u8 a = data[i * 4 + 3];
 
-        rgb color = RGB(r, g, b);
+        rgb color = ARGB(a, r, g, b);
         fwrite(&color, 1, 2, output);
     }
 
