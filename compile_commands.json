@@ -10,20 +10,21 @@
       "-fno-gcse",
       "-ffast-math",
       "--no-standard-includes",
-      "-I/home/duckonaut/repos/ds/coolshit/include",
+      "-I/home/duckonaut/repos/molebo/lib/tinf/include",
+      "-I/home/duckonaut/repos/molebo/include",
       "-I/opt/devkitpro/libnds/include",
       "-I/opt/devkitpro/libnds/include",
       "-I/opt/devkitpro/devkitARM/arm-none-eabi/include",
       "-I/opt/devkitpro/devkitARM/lib/gcc/arm-none-eabi/13.2.0/include",
-      "-I/home/duckonaut/repos/ds/coolshit/build",
+      "-I/home/duckonaut/repos/molebo/build",
       "-DARM9",
       "-c",
       "-o",
       "main.o",
-      "/home/duckonaut/repos/ds/coolshit/source/main.c"
+      "/home/duckonaut/repos/molebo/source/main.c"
     ],
-    "directory": "/home/duckonaut/repos/ds/coolshit/build",
-    "file": "/home/duckonaut/repos/ds/coolshit/source/main.c",
-    "output": "/home/duckonaut/repos/ds/coolshit/build/main.o"
+    "directory": "/home/duckonaut/repos/molebo/build",
+    "file": "/home/duckonaut/repos/molebo/source/main.c",
+    "output": "/home/duckonaut/repos/molebo/build/main.o"
   }
 ]

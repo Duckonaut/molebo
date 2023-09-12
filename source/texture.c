@@ -1,6 +1,8 @@
 #include "texture.h"
 #include <stdio.h>
 
+#include "tinf.h"
+
 enum GL_TEXTURE_SIZE_ENUM texture_size_decode(u16 size) {
     switch (size) {
         case 1024:
@@ -24,26 +26,92 @@ enum GL_TEXTURE_SIZE_ENUM texture_size_decode(u16 size) {
     }
 }
 
-texture_handle texture_load(const u8* data) {
+texture_t texture_load(const u8* data, size_t datalen) {
     // validate magic (NRGB)
     const u8 magic[4] = { 'N', 'R', 'G', 'B' };
     if (memcmp(data, magic, 4) != 0) {
         iprintf("Error: invalid magic\n");
-        return 0;
+
+        texture_t texture = {
+            .handle = 0,
+            .dyn = NULL,
+        };
+        return texture;
     }
 
-    enum GL_TEXTURE_SIZE_ENUM width, height;
+    u16 width = *(u16*)(data + 4);
+    u16 height = *(u16*)(data + 6);
 
-    width = texture_size_decode(data[4] | (data[5] << 8));
-    height = texture_size_decode(data[6] | (data[7] << 8));
+
+    enum GL_TEXTURE_SIZE_ENUM width_code, height_code;
+
+    width_code = texture_size_decode(width);
+    height_code = texture_size_decode(height);
+
+    bool compressed = data[8];
 
     texture_handle tex;
     glGenTextures(1, &tex);
     glBindTexture(0, tex);
 
-    rgb* texture_bin = (rgb*)(data + 8);
+    if (compressed) {
+        texture_t texture = {
+            .handle = tex,
+            .dyn = malloc(sizeof(dyn_texture_t)),
+        };
 
-    glTexImage2D(0, 0, GL_RGBA, width, height, 0, TEXGEN_TEXCOORD, (u8*)texture_bin);
+        texture.dyn->width = width;
+        texture.dyn->height = height;
+        texture.dyn->type = GL_RGBA;
+        size_t expected_len = (width * height * 2);
 
-    return tex;
+        texture.dyn->data = malloc(expected_len);
+
+        // compressed source
+        u8* source = (u8*)data + 16;
+        size_t outlen = expected_len;
+
+        iprintf("compressed: %u\n", datalen);
+
+        // decompress using tinf
+        int res = tinf_gzip_uncompress(texture.dyn->data, &outlen, source, datalen - 16);
+
+        if ((res != TINF_OK) || (outlen != expected_len)) {
+            iprintf("Error: failed to decompress texture\n");
+            iprintf("res: %d\n", res);
+
+            texture_t texture = {
+                .handle = 0,
+                .dyn = NULL,
+            };
+            return texture;
+        }
+
+        iprintf("decompressed: %u\n", outlen);
+
+        rgb* texture_bin = (rgb*)texture.dyn->data;
+
+        glTexImage2D(0, 0, GL_RGBA, width_code, height_code, 0, TEXGEN_TEXCOORD, (u8*)texture_bin);
+
+        return texture;
+    } else {
+        rgb* texture_bin = (rgb*)(data + 16);
+
+        glTexImage2D(0, 0, GL_RGBA, width_code, height_code, 0, TEXGEN_TEXCOORD, (u8*)texture_bin);
+
+        texture_t texture = {
+            .handle = tex,
+            .dyn = NULL,
+        };
+
+        return texture;
+    }
+}
+
+void texture_free(texture_t texture) {
+    if (texture.dyn) {
+        free(texture.dyn->data);
+        free(texture.dyn);
+    }
+    glDeleteTextures(1, &texture.handle);
 }

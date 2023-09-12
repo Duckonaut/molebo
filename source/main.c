@@ -71,49 +71,44 @@ struct state {
     mesh_t molebo_eye_mesh;
     mesh_instance_t molebo_instance;
     mesh_instance_t molebo_eye_instance;
-    texture_handle molebo_tex;
-    texture_handle molebo_eye_tex;
-    texture_handle blank_tex;
+    texture_t molebo_tex;
+    texture_t molebo_eye_tex;
+    texture_t blank_tex;
 };
 
 void state_init(state_t* state) {
     bzero(state, sizeof(state_t));
 
-    u8* blank_tex_data = malloc(8 * 8 * 2 + 8);
+    u8* blank_tex_data = malloc(8 * 8 * 2 + 16);
     memcpy(blank_tex_data, "NRGB", 4);
     *(u16*)(blank_tex_data + 4) = 8;
     *(u16*)(blank_tex_data + 6) = 8;
-    memset(blank_tex_data + 8, 0xFF, 8 * 8 * 2);
+    *(u8*)(blank_tex_data + 8) = 0;
+    memset(blank_tex_data + 16, 0xFF, 8 * 8 * 2);
 
-    texture_handle tex = texture_load(molebo_nrgb);
+    state->molebo_tex = texture_load(molebo_nrgb, molebo_nrgb_size);
 
-    if (!tex) {
-        printf("Error: could not load texture\n");
+    if (!state->molebo_tex.handle) {
+        iprintf("Error: could not load molebo texture\n");
         return;
     }
 
-    state->molebo_tex = tex;
+    state->molebo_eye_tex = texture_load(molebo_eyes_nrgb, molebo_eyes_nrgb_size);
 
-    texture_handle eye_tex = texture_load(molebo_eyes_nrgb);
-
-    if (!eye_tex) {
-        printf("Error: could not load texture\n");
+    if (!state->molebo_eye_tex.handle) {
+        iprintf("Error: could not load molebo eyes texture\n");
         return;
     }
 
-    state->molebo_eye_tex = eye_tex;
+    state->blank_tex = texture_load(blank_tex_data, 8 * 8 * 2 + 16);
 
-    texture_handle blank_tex = texture_load(blank_tex_data);
-
-    if (!blank_tex) {
-        printf("Error: could not load texture\n");
+    if (!state->blank_tex.handle) {
+        iprintf("Error: could not load blank texture\n");
         return;
     }
 
-    state->blank_tex = blank_tex;
-
-    mesh_load_nmsh(&state->molebo_mesh, mole_nmsh);
-    mesh_load_nmsh(&state->molebo_eye_mesh, mole_eyes_nmsh);
+    mesh_load_nmsh(&state->molebo_mesh, mole_nmsh, mole_nmsh_size);
+    mesh_load_nmsh(&state->molebo_eye_mesh, mole_eyes_nmsh, mole_eyes_nmsh_size);
 
     state->molebo_instance = (mesh_instance_t) {
         .mesh = &state->molebo_mesh,
@@ -122,13 +117,13 @@ void state_init(state_t* state) {
             .rotation = { 0.0f, 0.0f, 0.0f },
             .scale = { 1.0f, 1.0f, 1.0f },
         },
-        .texture = state->molebo_tex,
+        .texture = state->molebo_tex.handle,
     };
 
     state->molebo_eye_instance = (mesh_instance_t) {
         .mesh = &state->molebo_eye_mesh,
         .transform = state->molebo_instance.transform,
-        .texture = state->molebo_eye_tex,
+        .texture = state->molebo_eye_tex.handle,
     };
 
     state->quad_instance = (mesh_instance_t) {
@@ -138,7 +133,7 @@ void state_init(state_t* state) {
             .rotation = { 0.0f, 0.0f, 0.0f },
             .scale = { 2.0f, 2.0f, 2.0f },
         },
-        .texture = state->molebo_tex,
+        .texture = state->molebo_tex.handle,
     };
 }
 
@@ -187,14 +182,13 @@ int main() {
 
     glMatrixMode(GL_MODELVIEW);
 
-    iprintf("sizeof(vertex_t): %d\n", sizeof(vertex_t));
     iprintf("sizeof(molebo_nmsh): %d\n", mole_nmsh_size);
     iprintf("sizeof(molebo_tex): %d\n", molebo_nrgb_size);
 
     iprintf("\ntexture handles:\n");
-    iprintf(" molebo:      %d\n", state.molebo_tex);
-    iprintf(" molebo eyes: %d\n", state.molebo_eye_tex);
-    iprintf(" blank:      %d\n", state.blank_tex);
+    iprintf(" molebo:      %d\n", state.molebo_tex.handle);
+    iprintf(" molebo eyes: %d\n", state.molebo_eye_tex.handle);
+    iprintf(" blank:       %d\n", state.blank_tex.handle);
 
     while (1) {
         draw_top_3d_scene(&state);
@@ -209,6 +203,10 @@ int main() {
         if (update(&state))
             break;
     }
+
+    texture_free(state.molebo_tex);
+    texture_free(state.molebo_eye_tex);
+    texture_free(state.blank_tex);
 
     return 0;
 }
@@ -235,11 +233,11 @@ int update(state_t* state) {
     if (keys & KEY_DOWN)
         state->quad_instance.texture--;
 
-    if (state->quad_instance.texture > state->blank_tex)
-        state->quad_instance.texture = state->molebo_tex;
+    if (state->quad_instance.texture > state->blank_tex.handle)
+        state->quad_instance.texture = state->molebo_tex.handle;
 
-    if (state->quad_instance.texture < state->molebo_tex)
-        state->quad_instance.texture = state->blank_tex;
+    if (state->quad_instance.texture < state->molebo_tex.handle)
+        state->quad_instance.texture = state->blank_tex.handle;
 
     state->molebo_instance.transform.rotation[1] += 0.5f;
 

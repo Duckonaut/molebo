@@ -9,6 +9,8 @@
 #define FAST_OBJ_IMPLEMENTATION
 #include <fast_obj.h>
 
+#include <zlib.h>
+
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
@@ -39,23 +41,26 @@ int usage() {
     printf("OBJ -> NDS easily readable mesh converter\n"
            "by Duckonaut\n"
            "Usage:\n"
-           "    obj2nds-mesh <input.obj> <output.nmsh> [-t/--texture-size SIZE]\n"
+           "    obj2nds-mesh <input.obj> <output.nmsh> [-t/--texture-size SIZE] [-g/--gzip]\n"
            "Options:\n"
-           "    -t/--texture-size SIZE: set the texture size (default: 256)\n");
+           "    -t/--texture-size SIZE: set the texture size (default: 256)\n"
+           "    -g/--gzip: compress the output file\n");
     return EXIT_FAILURE;
 }
 
 typedef struct args {
     const char* input;
     const char* output;
+    bool gzip;
     u16 texture_size;
 } args_t;
 
 args_t parse_args(int argc, char* argv[]) {
     args_t args = {
-        .texture_size = 0,
         .input = NULL,
         .output = NULL,
+        .gzip = false,
+        .texture_size = 0,
     };
 
     for (int i = 1; i < argc; i++) {
@@ -67,6 +72,8 @@ args_t parse_args(int argc, char* argv[]) {
 
             args.texture_size = atoi(argv[i + 1]);
             i++;
+        } else if (strcmp(argv[i], "-g") == 0 || strcmp(argv[i], "--gzip") == 0) {
+            args.gzip = true;
         } else if (!args.input) {
             args.input = argv[i];
         } else if (!args.output) {
@@ -87,6 +94,14 @@ args_t parse_args(int argc, char* argv[]) {
     }
 
     return args;
+}
+
+void nmsh_write(bool compressed, const void* data, size_t size, void* output) {
+    if (compressed) {
+        gzwrite(output, data, size);
+    } else {
+        fwrite(data, size, 1, output);
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -133,7 +148,7 @@ int main(int argc, char* argv[]) {
 
     fclose(meta_file);
 
-    FILE* output = fopen(args.output, "wb");
+    void* output = fopen(args.output, "wb");
 
     // write magic: NMSH
     const u8 magic[4] = { 'N', 'M', 'S', 'H' };
@@ -147,6 +162,27 @@ int main(int argc, char* argv[]) {
     u16 index_count = mesh->index_count;
 
     fwrite(&index_count, 1, sizeof(u16), output);
+
+    // write if the mesh is compressed
+    u8 compressed = args.gzip;
+
+    fwrite(&compressed, 1, sizeof(u8), output);
+
+    // pad so the header is 16 bytes
+    const u8 padding[7] = { 0 };
+
+    fwrite(padding, 1, 7, output);
+
+    // after the header comes data.
+    // we want to compress it with zlib if the flag is set.
+    //
+    // otherwise, we just write the data as-is.
+
+    if (args.gzip) {
+        fclose(output);
+
+        output = gzopen(args.output, "ab");
+    }
 
     // write mesh data
 
@@ -179,14 +215,22 @@ int main(int argc, char* argv[]) {
             },
         };
 
-        fwrite(&vertex, sizeof(vertex_t), 1, output);
+        nmsh_write(args.gzip, &vertex, sizeof(vertex_t), output);
     }
 
     // write indices
+
     for (size_t i = 0; i < mesh->index_count; i++) {
         u16 index = (u16)i;
-        fwrite(&index, 1, sizeof(u16), output);
+        nmsh_write(args.gzip, &index, sizeof(u16), output);
     }
 
+    // todo: more data
+
+    if (args.gzip) {
+        gzclose(output);
+    } else {
+        fclose(output);
+    }
     return EXIT_SUCCESS;
 }

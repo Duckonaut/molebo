@@ -21,10 +21,10 @@ include $(DEVKITARM)/ds_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(shell basename $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source
+SOURCES		:=	source lib/tinf/src
 DATA		:=	data
 ASSETS		:=	assets
-INCLUDES	:=	include
+INCLUDES	:=	include lib/tinf/include
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -128,11 +128,11 @@ assets: tools $(NRGBFILES) $(NMSHFILES)
 
 $(NRGBFILES):
 	@echo "Converting PNG to NRGB"
-	@$(foreach png,$(PNGFILES),$(CURDIR)/tools/png2nds-rgb $(CURDIR)/$(ASSETS)/$(png) $(CURDIR)/$(DATA)/$(png:.png=.nrgb);)
+	@$(foreach png,$(PNGFILES),$(CURDIR)/tools/png2nds-rgb $(CURDIR)/$(ASSETS)/$(png) $(CURDIR)/$(DATA)/$(png:.png=.nrgb) -g;)
 
 $(NMSHFILES):
 	@echo "Converting OBJ to NMSH"
-	@$(foreach obj,$(OBJFILES),$(CURDIR)/tools/obj2nds-mesh $(CURDIR)/$(ASSETS)/$(obj) $(CURDIR)/$(DATA)/$(obj:.obj=.nmsh);)
+	@$(foreach obj,$(OBJFILES),$(CURDIR)/tools/obj2nds-mesh $(CURDIR)/$(ASSETS)/$(obj) $(CURDIR)/$(DATA)/$(obj:.obj=.nmsh) -g;)
  
 else
  

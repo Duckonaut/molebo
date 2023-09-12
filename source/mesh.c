@@ -3,7 +3,9 @@
 #include "nds/ndstypes.h"
 #include "stdio.h"
 
-void mesh_load_nmsh(mesh_t* mesh, const u8* data) {
+#include "tinf.h"
+
+void mesh_load_nmsh(mesh_t* mesh, const u8* data, usize datalen) {
     // validate magic (NMSH)
     const u8 magic[4] = { 'N', 'M', 'S', 'H' };
 
@@ -15,8 +17,37 @@ void mesh_load_nmsh(mesh_t* mesh, const u8* data) {
     mesh->mode = GL_TRIANGLES;
     mesh->vert_len = *(u16*)(data + 4);
     mesh->index_len = *(u16*)(data + 6);
-    mesh->vertices = (vertex_t*)(data + 8);
-    mesh->indices = (u16*)(data + 8 + mesh->vert_len * sizeof(vertex_t));
+    mesh->compressed = *(u8*)(data + 8);
+
+    if (mesh->compressed) {
+        size_t expected_len = mesh->vert_len * sizeof(vertex_t) + mesh->index_len * sizeof(u16);
+
+        u8* decompressed_data = malloc(expected_len);
+
+        // compressed source
+        u8* source = (u8*)data + 16;
+        size_t outlen = expected_len;
+
+        iprintf("compressed: %u\n", datalen);
+
+        // decompress using tinf
+        int res = tinf_gzip_uncompress(decompressed_data, &outlen, source, datalen - 16);
+
+        if ((res != TINF_OK) || (outlen != expected_len)) {
+            iprintf("Error: failed to decompress texture\n");
+            iprintf("res: %d\n", res);
+
+            return;
+        }
+
+        iprintf("decompressed: %u\n", outlen);
+
+        mesh->vertices = (vertex_t*)decompressed_data;
+        mesh->indices = (u16*)(decompressed_data + mesh->vert_len * sizeof(vertex_t));
+    } else {
+        mesh->vertices = (vertex_t*)(data + 16);
+        mesh->indices = (u16*)(data + 16 + mesh->vert_len * sizeof(vertex_t));
+    }
 }
 
 void mesh_draw(const mesh_t* mesh) {

@@ -16,6 +16,7 @@ typedef struct mesh {
     usize vert_len;
     usize index_len;
     GL_GLBEGIN_ENUM mode;
+    bool compressed;
 } mesh_t;
 
 typedef struct transform {
@@ -30,6 +31,7 @@ typedef struct mesh_instance {
     texture_handle texture;
 } mesh_instance_t;
 
-void mesh_load_nmsh(mesh_t* mesh, const u8* data);
+void mesh_load_nmsh(mesh_t* mesh, const u8* data, usize datalen);
 void mesh_draw(const mesh_t* mesh);
 void mesh_instance_draw(const mesh_instance_t* mesh_instance);
+void mesh_free(mesh_t* mesh);

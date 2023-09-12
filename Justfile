@@ -1,5 +1,5 @@
 run: build
-    desmume coolshit.nds
+    desmume molebo.nds
 
 rebuild:
     make clean
