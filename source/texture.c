@@ -42,7 +42,6 @@ texture_t texture_load(const u8* data, size_t datalen) {
     u16 width = *(u16*)(data + 4);
     u16 height = *(u16*)(data + 6);
 
-
     enum GL_TEXTURE_SIZE_ENUM width_code, height_code;
 
     width_code = texture_size_decode(width);
@@ -91,13 +90,31 @@ texture_t texture_load(const u8* data, size_t datalen) {
 
         rgb* texture_bin = (rgb*)texture.dyn->data;
 
-        glTexImage2D(0, 0, GL_RGBA, width_code, height_code, 0, TEXGEN_TEXCOORD, (u8*)texture_bin);
+        glTexImage2D(
+            0,
+            0,
+            GL_RGBA,
+            width_code,
+            height_code,
+            0,
+            TEXGEN_TEXCOORD | GL_TEXTURE_WRAP_S | GL_TEXTURE_WRAP_T,
+            (u8*)texture_bin
+        );
 
         return texture;
     } else {
         rgb* texture_bin = (rgb*)(data + 16);
 
-        glTexImage2D(0, 0, GL_RGBA, width_code, height_code, 0, TEXGEN_TEXCOORD, (u8*)texture_bin);
+        glTexImage2D(
+            0,
+            0,
+            GL_RGBA,
+            width_code,
+            height_code,
+            0,
+            TEXGEN_TEXCOORD | GL_TEXTURE_WRAP_S | GL_TEXTURE_WRAP_T,
+            (u8*)texture_bin
+        );
 
         texture_t texture = {
             .handle = tex,

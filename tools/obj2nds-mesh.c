@@ -185,6 +185,12 @@ int main(int argc, char* argv[]) {
     }
 
     // write mesh data
+    if (mesh->color_count > 0) {
+        for (size_t i = 0; i < mesh->color_count; i++) {
+            printf("%d: %f\n", i, mesh->colors[i]);
+        }
+    }
+
 
     // write vertices
     for (size_t i = 0; i < mesh->index_count; i++) {
@@ -201,13 +207,23 @@ int main(int argc, char* argv[]) {
         float ny = mesh->normals[position->n * 3 + 1];
         float nz = mesh->normals[position->n * 3 + 2];
 
+        u8 r = 255;
+        u8 g = 255;
+        u8 b = 255;
+
+        if (mesh->color_count > 0) {
+            r = mesh->colors[position->p * 3 + 0] * 255.0f;
+            g = mesh->colors[position->p * 3 + 1] * 255.0f;
+            b = mesh->colors[position->p * 3 + 2] * 255.0f;
+        }
+
         vertex_t vertex = {
             .position = {
                 ftov16(x),
                 ftov16(y),
                 ftov16(z),
             },
-            .color = RGB(255, 255, 255),
+            .color = RGB(r, g, b),
             .normal = 0,
             .texcoord = {
                 ftot16(u),

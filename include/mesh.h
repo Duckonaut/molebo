@@ -33,5 +33,7 @@ typedef struct mesh_instance {
 
 void mesh_load_nmsh(mesh_t* mesh, const u8* data, usize datalen);
 void mesh_draw(const mesh_t* mesh);
-void mesh_instance_draw(const mesh_instance_t* mesh_instance);
 void mesh_free(mesh_t* mesh);
+
+mesh_instance_t mesh_instance_create(const mesh_t* mesh, texture_handle texture);
+void mesh_instance_draw(const mesh_instance_t* mesh_instance);

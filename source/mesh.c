@@ -62,6 +62,18 @@ void mesh_draw(const mesh_t* mesh) {
     glEnd();
 }
 
+mesh_instance_t mesh_instance_create(const mesh_t* mesh, texture_handle texture) {
+    return (mesh_instance_t) {
+        .mesh = mesh,
+        .transform = {
+            .position = { 0.0f, 0.0f, 0.0f },
+            .rotation = { 0.0f, 0.0f, 0.0f },
+            .scale = { 1.0f, 1.0f, 1.0f },
+        },
+        .texture = texture
+    };
+}
+
 void mesh_instance_draw(const mesh_instance_t* mesh_instance) {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
