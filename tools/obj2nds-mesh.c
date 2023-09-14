@@ -24,11 +24,14 @@ typedef v16 vec3v[3];
 typedef t16 vec2t[2];
 
 typedef u16 rgb;
+typedef u16 v10;
 
 #define ftov16(f) ((v16)((f) * (1 << 12)))
 #define itot16(f) ((t16)((f) << 4))
 #define ftot16(f) ((t16)((f) * (1 << 4)))
+#define ftov10(f) ((f > .998) ? 0x1FE : ((v10)((f) * (1 << 9))))
 #define RGB(r, g, b) ((r >> 3) | ((g >> 3) << 5) | ((b >> 3) << 10))
+#define NORMAL_PACK(x, y, z) (u32)(((x)&0x3FF) | (((y)&0x3FF) << 10) | ((z) << 20))
 
 typedef struct vertex {
     vec3v position;
@@ -197,9 +200,9 @@ int main(int argc, char* argv[]) {
         float u = mesh->texcoords[position->t * 2 + 0] * args.texture_size;
         float v = (1.0f - mesh->texcoords[position->t * 2 + 1]) * args.texture_size;
 
-        float nx = mesh->normals[position->n * 3 + 0];
-        float ny = mesh->normals[position->n * 3 + 1];
-        float nz = mesh->normals[position->n * 3 + 2];
+        float nx = mesh->normals[position->n * 3 + 0] * 0.97;
+        float ny = mesh->normals[position->n * 3 + 1] * 0.97;
+        float nz = mesh->normals[position->n * 3 + 2] * 0.97;
 
         u8 r = 255;
         u8 g = 255;
@@ -218,7 +221,7 @@ int main(int argc, char* argv[]) {
                 ftov16(z),
             },
             .color = RGB(r, g, b),
-            .normal = 0,
+            .normal = NORMAL_PACK(ftov10(x), ftov10(y), ftov10(z)),
             .texcoord = {
                 ftot16(u),
                 ftot16(v),

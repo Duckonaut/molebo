@@ -130,7 +130,9 @@ void state_init(state_t* state) {
 #undef STANDARD_TEXTURE_LOAD
 
     mesh_load_nmsh(&state->molebo_mesh, mole_nmsh, mole_nmsh_size);
+    state->molebo_mesh.lit = true;
     mesh_load_nmsh(&state->molebo_eye_mesh, mole_eyes_nmsh, mole_eyes_nmsh_size);
+    state->molebo_eye_mesh.lit = true;
     mesh_load_nmsh(&state->beach_sand_mesh, beach_sand_nmsh, beach_sand_nmsh_size);
     mesh_load_nmsh(&state->beach_water_mesh, beach_water_nmsh, beach_water_nmsh_size);
 
@@ -142,14 +144,19 @@ void state_init(state_t* state) {
             .scale = { 1.0f, 1.0f, 1.0f },
         },
         .texture = state->molebo_tex.handle,
-        .poly_fmt = POLY_ALPHA(31) | POLY_CULL_BACK | POLY_ID(0b001000),
+        .poly_fmt = POLY_ALPHA(31)
+            | POLY_CULL_BACK
+            | POLY_ID(0b001000)
+            | POLY_FORMAT_LIGHT0
+            | POLY_FORMAT_LIGHT1
+            | POLY_TOON_HIGHLIGHT,
     };
 
     state->molebo_eye_instance = (mesh_instance_t){
         .mesh = &state->molebo_eye_mesh,
         .transform = state->molebo_instance.transform,
         .texture = state->molebo_eye_tex.handle,
-        .poly_fmt = POLY_ALPHA(31) | POLY_CULL_BACK | POLY_ID(0b001000),
+        .poly_fmt = state->molebo_instance.poly_fmt,
     };
 
     state->quad_instance = (mesh_instance_t) {
@@ -215,17 +222,16 @@ int main() {
 
     glViewport(0, 0, 255, 191);
 
-    glPolyFmt(POLY_ALPHA(31) | POLY_CULL_NONE);
-    glSetOutlineColor(1, RGB8(0, 0, 0));
-    // glMaterialf(GL_AMBIENT, RGB15(16, 16, 16));
-    // glMaterialf(GL_DIFFUSE, RGB15(16, 16, 16));
-    // glMaterialf(GL_SPECULAR, BIT(15) | RGB15(8, 8, 8));
-    // glMaterialf(GL_EMISSION, RGB15(16, 16, 16));
-
-    // ds uses a table for shinyness..this generates a half-ass one
-    // glMaterialShinyness();
-
     glMatrixMode(GL_MODELVIEW);
+    glLight(0, RGB15(16, 16, 16), floattov10(-0.8), 0, floattov10(-0.6));
+    glLight(1, RGB15(16, 16, 16), 0, floattov10(-1.0), 0);
+    glMaterialf(GL_AMBIENT, RGB15(8, 8, 8));
+    glMaterialf(GL_DIFFUSE, RGB15(24, 24, 24));
+    glMaterialf(GL_SPECULAR, RGB15(0, 0, 0));
+    glMaterialf(GL_EMISSION, RGB15(0, 0, 0));
+    glSetToonTableRange(0, 16, RGB15(18, 16, 16));
+    glSetToonTableRange(17, 24, RGB15(28, 26, 26));
+    glSetToonTableRange(25, 31, RGB15(31, 31, 31));
 
     while (1) {
         draw_top_3d_scene(&state);
@@ -329,6 +335,10 @@ int update(state_t* state) {
 
     if (state->quad_instance.texture < state->molebo_tex.handle)
         state->quad_instance.texture = state->blank_tex.handle;
+
+    state->molebo_instance.transform.rotation[1] += 1.0f;
+
+    state->molebo_eye_instance.transform = state->molebo_instance.transform;
 
     return 0;
 }

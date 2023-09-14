@@ -18,6 +18,7 @@ void mesh_load_nmsh(mesh_t* mesh, const u8* data, usize datalen) {
     mesh->vert_len = *(u16*)(data + 4);
     mesh->index_len = *(u16*)(data + 6);
     mesh->compressed = *(u8*)(data + 8);
+    mesh->lit = false;
 
     if (mesh->compressed) {
         size_t expected_len = mesh->vert_len * sizeof(vertex_t) + mesh->index_len * sizeof(u16);
@@ -51,11 +52,14 @@ void mesh_load_nmsh(mesh_t* mesh, const u8* data, usize datalen) {
 }
 
 void mesh_draw(const mesh_t* mesh) {
-    glNormal3f(0.0f, 0.0f, 1.0f);
     glBegin(mesh->mode);
     for (usize i = 0; i < mesh->index_len; i++) {
         vertex_t* vert = &mesh->vertices[mesh->indices[i]];
-        glColor(vert->color);
+        if (mesh->lit) {
+            glNormal(vert->normal);
+        } else {
+            glColor(vert->color);
+        }
         glTexCoord2t16(vert->texcoord[0], vert->texcoord[1]);
         glVertex3v16(vert->position[0], vert->position[1], vert->position[2]);
     }

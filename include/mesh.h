@@ -17,6 +17,7 @@ typedef struct mesh {
     usize index_len;
     GL_GLBEGIN_ENUM mode;
     bool compressed;
+    bool lit;
 } mesh_t;
 
 typedef struct transform {
