@@ -29,11 +29,13 @@ typedef struct mesh_instance {
     const mesh_t* mesh;
     transform_t transform;
     texture_handle texture;
+    u32 poly_fmt;
 } mesh_instance_t;
 
 void mesh_load_nmsh(mesh_t* mesh, const u8* data, usize datalen);
 void mesh_draw(const mesh_t* mesh);
 void mesh_free(mesh_t* mesh);
 
-mesh_instance_t mesh_instance_create(const mesh_t* mesh, texture_handle texture);
+mesh_instance_t
+mesh_instance_create(const mesh_t* mesh, texture_handle texture, u32 poly_fmt);
 void mesh_instance_draw(const mesh_instance_t* mesh_instance);

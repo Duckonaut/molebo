@@ -62,7 +62,7 @@ void mesh_draw(const mesh_t* mesh) {
     glEnd();
 }
 
-mesh_instance_t mesh_instance_create(const mesh_t* mesh, texture_handle texture) {
+mesh_instance_t mesh_instance_create(const mesh_t* mesh, texture_handle texture, u32 poly_fmt) {
     return (mesh_instance_t) {
         .mesh = mesh,
         .transform = {
@@ -70,7 +70,8 @@ mesh_instance_t mesh_instance_create(const mesh_t* mesh, texture_handle texture)
             .rotation = { 0.0f, 0.0f, 0.0f },
             .scale = { 1.0f, 1.0f, 1.0f },
         },
-        .texture = texture
+        .texture = texture,
+        .poly_fmt = poly_fmt,
     };
 }
 
@@ -91,5 +92,6 @@ void mesh_instance_draw(const mesh_instance_t* mesh_instance) {
         mesh_instance->transform.scale[2]
     );
     glBindTexture(0, mesh_instance->texture);
+    glPolyFmt(mesh_instance->poly_fmt);
     mesh_draw(mesh_instance->mesh);
 }

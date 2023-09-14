@@ -142,12 +142,14 @@ void state_init(state_t* state) {
             .scale = { 1.0f, 1.0f, 1.0f },
         },
         .texture = state->molebo_tex.handle,
+        .poly_fmt = POLY_ALPHA(31) | POLY_CULL_BACK | POLY_ID(0b001000),
     };
 
     state->molebo_eye_instance = (mesh_instance_t){
         .mesh = &state->molebo_eye_mesh,
         .transform = state->molebo_instance.transform,
         .texture = state->molebo_eye_tex.handle,
+        .poly_fmt = POLY_ALPHA(31) | POLY_CULL_BACK | POLY_ID(0b001000),
     };
 
     state->quad_instance = (mesh_instance_t) {
@@ -158,10 +160,14 @@ void state_init(state_t* state) {
             .scale = { 2.0f, 2.0f, 2.0f },
         },
         .texture = state->molebo_tex.handle,
+        .poly_fmt = POLY_ALPHA(31) | POLY_CULL_NONE | POLY_ID(0),
     };
 
-    state->beach_sand_instance =
-        mesh_instance_create(&state->beach_sand_mesh, state->sand_tex.handle);
+    state->beach_sand_instance = mesh_instance_create(
+        &state->beach_sand_mesh,
+        state->sand_tex.handle,
+        POLY_ALPHA(31) | POLY_CULL_NONE | POLY_ID(0)
+    );
 
     state->beach_sand_instance.transform.position[2] = 10.0f;
 
@@ -169,8 +175,11 @@ void state_init(state_t* state) {
     state->beach_sand_instance.transform.scale[1] = 16.0f;
     state->beach_sand_instance.transform.scale[2] = 16.0f;
 
-    state->beach_water_instance =
-        mesh_instance_create(&state->beach_water_mesh, state->water_tex.handle);
+    state->beach_water_instance = mesh_instance_create(
+        &state->beach_water_mesh,
+        state->water_tex.handle,
+        POLY_ALPHA(15) | POLY_CULL_NONE | POLY_ID(0)
+    );
 
     state->beach_water_instance.transform = state->beach_sand_instance.transform;
 }
@@ -196,16 +205,18 @@ int main() {
     glEnable(GL_ANTIALIAS);
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
+    glEnable(GL_OUTLINE);
 
     state_init(&state);
 
-    glClearColor(0, 0, 0, 31);
+    glClearColor(0, 181, 252, 31);
     glClearPolyID(63);
     glClearDepth(0x7FFF);
 
     glViewport(0, 0, 255, 191);
 
     glPolyFmt(POLY_ALPHA(31) | POLY_CULL_NONE);
+    glSetOutlineColor(1, RGB8(0, 0, 0));
     // glMaterialf(GL_AMBIENT, RGB15(16, 16, 16));
     // glMaterialf(GL_DIFFUSE, RGB15(16, 16, 16));
     // glMaterialf(GL_SPECULAR, BIT(15) | RGB15(8, 8, 8));
@@ -215,14 +226,6 @@ int main() {
     // glMaterialShinyness();
 
     glMatrixMode(GL_MODELVIEW);
-
-    iprintf("sizeof(molebo_nmsh): %d\n", mole_nmsh_size);
-    iprintf("sizeof(molebo_tex): %d\n", molebo_nrgb_size);
-
-    iprintf("\ntexture handles:\n");
-    iprintf(" molebo:      %d\n", state.molebo_tex.handle);
-    iprintf(" molebo eyes: %d\n", state.molebo_eye_tex.handle);
-    iprintf(" blank:       %d\n", state.blank_tex.handle);
 
     while (1) {
         draw_top_3d_scene(&state);
@@ -273,7 +276,6 @@ int update(state_t* state) {
     scanKeys();
 
     int keys = keysHeld();
-    int keys_just_pressed = keysDown();
 
     if (keys & KEY_START)
         return 1;
