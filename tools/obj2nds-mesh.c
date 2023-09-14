@@ -185,12 +185,6 @@ int main(int argc, char* argv[]) {
     }
 
     // write mesh data
-    if (mesh->color_count > 0) {
-        for (size_t i = 0; i < mesh->color_count; i++) {
-            printf("%d: %f\n", i, mesh->colors[i]);
-        }
-    }
-
 
     // write vertices
     for (size_t i = 0; i < mesh->index_count; i++) {
