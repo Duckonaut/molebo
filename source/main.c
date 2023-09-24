@@ -1,8 +1,11 @@
+#include "content.h"
 #include "mesh.h"
+#include "nds/arm9/input.h"
 #include "nds/ndstypes.h"
 #include "strings.h"
 #include "texture.h"
 #include "types.h"
+#include "player.h"
 
 #include "nds/arm9/console.h"
 #include "nds/arm9/video.h"
@@ -13,16 +16,6 @@
 #include <nds.h>
 #include <stdio.h>
 #include <string.h>
-
-#include "molebo_nrgb.h"
-#include "molebo_eye_nrgb.h"
-#include "mole_nmsh.h"
-#include "mole_eyes_nmsh.h"
-#include "quad_nmsh.h"
-#include "beach_sand_nmsh.h"
-#include "sand_nrgb.h"
-#include "beach_water_nmsh.h"
-#include "water_nrgb.h"
 
 typedef struct state state_t;
 
@@ -74,90 +67,43 @@ typedef struct camera {
     vec3 rotation;
 } camera_t;
 
-struct state {
+typedef struct state {
     // content
-    mesh_t molebo_mesh;
-    mesh_t molebo_eye_mesh;
-    mesh_t beach_sand_mesh;
-    mesh_t beach_water_mesh;
-    texture_t blank_tex;
-    texture_t molebo_tex;
-    texture_t molebo_eye_tex;
-    texture_t sand_tex;
-    texture_t water_tex;
+    content_t content;
 
     // systems
     camera_t camera;
+    int input_held;
+    int input_just_pressed;
+    int input_just_released;
 
     // instances
     mesh_instance_t quad_instance;
-    mesh_instance_t molebo_instance;
-    mesh_instance_t molebo_eye_instance;
     mesh_instance_t beach_sand_instance;
     mesh_instance_t beach_water_instance;
-};
+
+    // molebo
+    player_t player;
+} state_t;
 
 void state_init(state_t* state) {
     bzero(state, sizeof(state_t));
 
-    u8* blank_tex_data = malloc(8 * 8 * 2 + 16);
-    memcpy(blank_tex_data, "NRGB", 4);
-    *(u16*)(blank_tex_data + 4) = 8;
-    *(u16*)(blank_tex_data + 6) = 8;
-    *(u8*)(blank_tex_data + 8) = 0;
-    memset(blank_tex_data + 16, 0xFF, 8 * 8 * 2);
+    content_load(&state->content);
 
-    state->blank_tex = texture_load(blank_tex_data, 8 * 8 * 2 + 16);
+    state->player.body = mesh_instance_create(
+        &state->content.molebo_mesh,
+        state->content.molebo_tex.handle,
+        POLY_ALPHA(31) | POLY_CULL_BACK | POLY_FORMAT_LIGHT0 | POLY_FORMAT_LIGHT1 |
+            POLY_TOON_HIGHLIGHT | POLY_ID(0b001000)
+    );
 
-    if (!state->blank_tex.handle) {
-        iprintf("Error: could not load blank texture\n");
-        return;
-    }
-
-#define STANDARD_TEXTURE_LOAD(name)                                                            \
-    state->name##_tex = texture_load(name##_nrgb, name##_nrgb_size);                           \
-                                                                                               \
-    if (!state->name##_tex.handle) {                                                           \
-        iprintf("Error: could not load " #name " texture\n");                                  \
-        return;                                                                                \
-    }
-
-    STANDARD_TEXTURE_LOAD(molebo);
-    STANDARD_TEXTURE_LOAD(molebo_eye);
-    STANDARD_TEXTURE_LOAD(sand);
-    STANDARD_TEXTURE_LOAD(water);
-
-#undef STANDARD_TEXTURE_LOAD
-
-    mesh_load_nmsh(&state->molebo_mesh, mole_nmsh, mole_nmsh_size);
-    state->molebo_mesh.lit = true;
-    mesh_load_nmsh(&state->molebo_eye_mesh, mole_eyes_nmsh, mole_eyes_nmsh_size);
-    state->molebo_eye_mesh.lit = true;
-    mesh_load_nmsh(&state->beach_sand_mesh, beach_sand_nmsh, beach_sand_nmsh_size);
-    mesh_load_nmsh(&state->beach_water_mesh, beach_water_nmsh, beach_water_nmsh_size);
-
-    state->molebo_instance = (mesh_instance_t) {
-        .mesh = &state->molebo_mesh,
-        .transform = {
-            .position = { -2.0f, 0.0f, -6.0f },
-            .rotation = { 0.0f, 0.0f, 0.0f },
-            .scale = { 1.0f, 1.0f, 1.0f },
-        },
-        .texture = state->molebo_tex.handle,
-        .poly_fmt = POLY_ALPHA(31)
-            | POLY_CULL_BACK
-            | POLY_ID(0b001000)
-            | POLY_FORMAT_LIGHT0
-            | POLY_FORMAT_LIGHT1
-            | POLY_TOON_HIGHLIGHT,
-    };
-
-    state->molebo_eye_instance = (mesh_instance_t){
-        .mesh = &state->molebo_eye_mesh,
-        .transform = state->molebo_instance.transform,
-        .texture = state->molebo_eye_tex.handle,
-        .poly_fmt = state->molebo_instance.poly_fmt,
-    };
+    state->player.eyes = mesh_instance_create(
+        &state->content.molebo_eye_mesh,
+        state->content.molebo_eye_tex.handle,
+        POLY_ALPHA(31) | POLY_CULL_BACK | POLY_FORMAT_LIGHT0 | POLY_FORMAT_LIGHT1 |
+            POLY_TOON_HIGHLIGHT | POLY_ID(0b001000)
+    );
 
     state->quad_instance = (mesh_instance_t) {
         .mesh = &quad_mesh,
@@ -166,13 +112,13 @@ void state_init(state_t* state) {
             .rotation = { 0.0f, 0.0f, 0.0f },
             .scale = { 2.0f, 2.0f, 2.0f },
         },
-        .texture = state->molebo_tex.handle,
+        .texture = state->content.molebo_tex.handle,
         .poly_fmt = POLY_ALPHA(31) | POLY_CULL_NONE | POLY_ID(0),
     };
 
     state->beach_sand_instance = mesh_instance_create(
-        &state->beach_sand_mesh,
-        state->sand_tex.handle,
+        &state->content.beach_sand_mesh,
+        state->content.sand_tex.handle,
         POLY_ALPHA(31) | POLY_CULL_NONE | POLY_ID(0)
     );
 
@@ -183,8 +129,8 @@ void state_init(state_t* state) {
     state->beach_sand_instance.transform.scale[2] = 16.0f;
 
     state->beach_water_instance = mesh_instance_create(
-        &state->beach_water_mesh,
-        state->water_tex.handle,
+        &state->content.beach_water_mesh,
+        state->content.water_tex.handle,
         POLY_ALPHA(15) | POLY_CULL_NONE | POLY_ID(0)
     );
 
@@ -247,9 +193,7 @@ int main() {
             break;
     }
 
-    texture_free(state.molebo_tex);
-    texture_free(state.molebo_eye_tex);
-    texture_free(state.blank_tex);
+    content_unload(&state.content);
 
     return 0;
 }
@@ -269,8 +213,10 @@ void draw_top_3d_scene(const state_t* state) {
 
     mesh_instance_draw(&state->beach_sand_instance);
     mesh_instance_draw(&state->quad_instance);
-    mesh_instance_draw(&state->molebo_instance);
-    mesh_instance_draw(&state->molebo_eye_instance);
+
+    // draw molebo
+    player_draw(&state->player);
+
     glPolyFmt(POLY_ALPHA(20) | POLY_CULL_NONE);
     mesh_instance_draw(&state->beach_water_instance);
     glPolyFmt(POLY_ALPHA(31) | POLY_CULL_NONE);
@@ -281,22 +227,26 @@ void draw_bottom_screen(const state_t* state) {}
 int update(state_t* state) {
     scanKeys();
 
-    int keys = keysHeld();
+    state->input_held = keysHeld();
+    state->input_just_pressed = keysDown();
+    state->input_just_released = keysUp();
 
-    if (keys & KEY_START)
+    if (state->input_held & KEY_START)
         return 1;
 
-    bool left = keys & KEY_LEFT;
-    bool right = keys & KEY_RIGHT;
-    bool up = keys & KEY_UP;
-    bool down = keys & KEY_DOWN;
-    bool a = keys & KEY_A;
-    bool b = keys & KEY_B;
-    bool x = keys & KEY_X;
-    bool y = keys & KEY_Y;
+    bool left = state->input_held & KEY_LEFT;
+    bool right = state->input_held & KEY_RIGHT;
+    bool up = state->input_held & KEY_UP;
+    bool down = state->input_held & KEY_DOWN;
+    bool a = state->input_held & KEY_A;
+    bool b = state->input_held & KEY_B;
+    bool x = state->input_held & KEY_X;
+    bool y = state->input_held & KEY_Y;
 
-    bool l = keys & KEY_L;
-    bool r = keys & KEY_R;
+    bool l = state->input_held & KEY_L;
+    bool r = state->input_held & KEY_R;
+
+    player_update(&state->player);
 
     if (left)
         state->camera.position[0] -= 0.1f;
@@ -329,16 +279,6 @@ int update(state_t* state) {
         state->camera.rotation[1] -= 360.0f;
     if (state->camera.rotation[1] < 0.0f)
         state->camera.rotation[1] += 360.0f;
-
-    if (state->quad_instance.texture > state->blank_tex.handle)
-        state->quad_instance.texture = state->molebo_tex.handle;
-
-    if (state->quad_instance.texture < state->molebo_tex.handle)
-        state->quad_instance.texture = state->blank_tex.handle;
-
-    state->molebo_instance.transform.rotation[1] += 1.0f;
-
-    state->molebo_eye_instance.transform = state->molebo_instance.transform;
 
     return 0;
 }

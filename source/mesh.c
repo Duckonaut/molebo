@@ -65,6 +65,15 @@ void mesh_draw(const mesh_t* mesh) {
     }
     glEnd();
 }
+void mesh_free(mesh_t* mesh) {
+    if (mesh->compressed) {
+        free(mesh->vertices);
+        free(mesh->indices);
+    }
+
+    mesh->vertices = NULL;
+    mesh->indices = NULL;
+}
 
 mesh_instance_t mesh_instance_create(const mesh_t* mesh, texture_handle texture, u32 poly_fmt) {
     return (mesh_instance_t) {
