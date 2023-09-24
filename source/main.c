@@ -6,6 +6,7 @@
 #include "texture.h"
 #include "types.h"
 #include "player.h"
+#include "input.h"
 
 #include "nds/arm9/console.h"
 #include "nds/arm9/video.h"
@@ -73,9 +74,7 @@ typedef struct state {
 
     // systems
     camera_t camera;
-    int input_held;
-    int input_just_pressed;
-    int input_just_released;
+    input_t input;
 
     // instances
     mesh_instance_t quad_instance;
@@ -201,14 +200,14 @@ int main() {
 void draw_top_3d_scene(const state_t* state) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(80, 256.0 / 192.0, 0.1, 100);
+    gluPerspective(70, 256.0 / 192.0, 0.1, 100);
     glRotateX(state->camera.rotation[0]);
     glRotateY(state->camera.rotation[1]);
     glRotateZ(state->camera.rotation[2]);
     glTranslatef(
-        state->camera.position[0],
-        state->camera.position[1],
-        state->camera.position[2]
+        -state->camera.position[0],
+        -state->camera.position[1],
+        -state->camera.position[2]
     );
 
     mesh_instance_draw(&state->beach_sand_instance);
@@ -224,61 +223,26 @@ void draw_top_3d_scene(const state_t* state) {
 
 void draw_bottom_screen(const state_t* state) {}
 
+inline static float lerpf(float a, float b, float t) {
+    return a + (b - a) * t;
+}
+
 int update(state_t* state) {
-    scanKeys();
+    input_update(&state->input);
 
-    state->input_held = keysHeld();
-    state->input_just_pressed = keysDown();
-    state->input_just_released = keysUp();
-
-    if (state->input_held & KEY_START)
+    if (state->input.held & KEY_START)
         return 1;
 
-    bool left = state->input_held & KEY_LEFT;
-    bool right = state->input_held & KEY_RIGHT;
-    bool up = state->input_held & KEY_UP;
-    bool down = state->input_held & KEY_DOWN;
-    bool a = state->input_held & KEY_A;
-    bool b = state->input_held & KEY_B;
-    bool x = state->input_held & KEY_X;
-    bool y = state->input_held & KEY_Y;
+    player_update(&state->player, &state->input);
 
-    bool l = state->input_held & KEY_L;
-    bool r = state->input_held & KEY_R;
+    state->camera.position[0] =
+        lerpf(state->camera.position[0], state->player.body.transform.position[0], 0.1f);
+    state->camera.position[1] =
+        lerpf(state->camera.position[1], state->player.body.transform.position[1] + 9.0f, 0.1f);
+    state->camera.position[2] =
+        lerpf(state->camera.position[2], state->player.body.transform.position[2] + 4.0f, 0.1f);
 
-    player_update(&state->player);
-
-    if (left)
-        state->camera.position[0] -= 0.1f;
-    if (right)
-        state->camera.position[0] += 0.1f;
-    if (up)
-        state->camera.position[2] += 0.1f;
-    if (down)
-        state->camera.position[2] -= 0.1f;
-
-    if (l)
-        state->camera.position[1] += 0.1f;
-    if (r)
-        state->camera.position[1] -= 0.1f;
-
-    if (a) // look right
-        state->camera.rotation[1] -= 2.0f;
-    if (b) // look down
-        state->camera.rotation[0] += 2.0f;
-    if (x) // look up
-        state->camera.rotation[0] -= 2.0f;
-    if (y) // look left
-        state->camera.rotation[1] += 2.0f;
-
-    if (state->camera.rotation[0] > 87.0f)
-        state->camera.rotation[0] = 87.0f;
-    if (state->camera.rotation[0] < -87.0f)
-        state->camera.rotation[0] = -87.0f;
-    if (state->camera.rotation[1] > 360.0f)
-        state->camera.rotation[1] -= 360.0f;
-    if (state->camera.rotation[1] < 0.0f)
-        state->camera.rotation[1] += 360.0f;
+    state->camera.rotation[0] = 45.0f;
 
     return 0;
 }

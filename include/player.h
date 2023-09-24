@@ -1,6 +1,7 @@
 #pragma once
 
 #include "content.h"
+#include "input.h"
 #include "mesh.h"
 
 typedef struct player {
@@ -19,5 +20,5 @@ typedef struct player {
 } player_t;
 
 void player_init(player_t* player, const content_t* content);
-void player_update(player_t* player);
+void player_update(player_t* player, const input_t* input);
 void player_draw(const player_t* player);
