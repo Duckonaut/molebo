@@ -1,6 +1,11 @@
 #include "player.h"
 #include "input.h"
+#include "stdio.h"
+#include "util.h"
+
 #include "nds/input.h"
+#include "nds/arm9/trig_lut.h"
+
 #include <string.h>
 
 void player_init(player_t* player, const content_t* content) {}
@@ -20,6 +25,18 @@ void player_update(player_t* player, const input_t* input) {
 
     player->body.transform.position[0] += (right - left) * 0.1f;
     player->body.transform.position[2] += (down - up) * 0.1f;
+
+    player->body.transform.position[1] =
+        ground_z_to_y(player->body.transform.position[2]);
+
+    i16 current_angle = player->body.transform.rotation[1];
+    i16 target_angle = nds_atan2i(
+        (left - right),
+        (up - down)
+    );
+    iprintf("\x1b[16;0H        \n");
+    iprintf("\x1b[16;0H%d\n", target_angle);
+    player->body.transform.rotation[1] = nds_anglelerp(current_angle, target_angle, 0.1f);
 
     memcpy(&player->eyes.transform, &player->body.transform,
            sizeof(transform_t));

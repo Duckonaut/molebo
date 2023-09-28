@@ -7,6 +7,7 @@
 #include "types.h"
 #include "player.h"
 #include "input.h"
+#include "util.h"
 
 #include "nds/arm9/console.h"
 #include "nds/arm9/video.h"
@@ -222,10 +223,6 @@ void draw_top_3d_scene(const state_t* state) {
 }
 
 void draw_bottom_screen(const state_t* state) {}
-
-inline static float lerpf(float a, float b, float t) {
-    return a + (b - a) * t;
-}
 
 int update(state_t* state) {
     input_update(&state->input);

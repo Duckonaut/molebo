@@ -96,9 +96,9 @@ void mesh_instance_draw(const mesh_instance_t* mesh_instance) {
         mesh_instance->transform.position[1],
         mesh_instance->transform.position[2]
     );
-    glRotatef(mesh_instance->transform.rotation[0], 1.0f, 0.0f, 0.0f);
-    glRotatef(mesh_instance->transform.rotation[1], 0.0f, 1.0f, 0.0f);
-    glRotatef(mesh_instance->transform.rotation[2], 0.0f, 0.0f, 1.0f);
+    glRotateXi(mesh_instance->transform.rotation[0]);
+    glRotateYi(mesh_instance->transform.rotation[1]);
+    glRotateZi(mesh_instance->transform.rotation[2]);
     glScalef(
         mesh_instance->transform.scale[0],
         mesh_instance->transform.scale[1],

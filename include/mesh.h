@@ -8,6 +8,12 @@ typedef struct vertex {
     rgb color;
     u32 normal;
     vec2t texcoord;
+    // animation data
+    // bone indices (max 15 bones, 4 bones per vertex, 4 bits each, 0 is none).
+    // 0x0000 = no bone
+    // 0x0001 = bone 1
+    // 0x0024 = bone 2, then bone 4
+    u16 bone_indices;
 } vertex_t;
 
 typedef struct mesh {
@@ -22,7 +28,7 @@ typedef struct mesh {
 
 typedef struct transform {
     vec3 position;
-    vec3 rotation;
+    vec3i rotation;
     vec3 scale;
 } transform_t;
 
