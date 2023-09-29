@@ -3,20 +3,20 @@
 #include "content.h"
 #include "input.h"
 #include "mesh.h"
+#include "texture.h"
+
+typedef enum player_anim_state {
+    PLAYER_ANIM_IDLE,
+    PLAYER_ANIM_WALK,
+} player_anim_state_t;
 
 typedef struct player {
-    mesh_instance_t body;
-    mesh_instance_t head;
-    mesh_instance_t eyes;
-    mesh_instance_t left_arm;
-    mesh_instance_t right_arm;
-    mesh_instance_t left_leg;
-    mesh_instance_t right_leg;
-
-    vec3 position;
-    vec3 rotation;
+    transform_t transform;
+    texture_handle body_texture;
+    texture_handle eyes_texture;
 
     float speed;
+    u32 timer;
 } player_t;
 
 void player_init(player_t* player, const content_t* content);

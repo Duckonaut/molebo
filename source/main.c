@@ -1,7 +1,5 @@
 #include "content.h"
 #include "mesh.h"
-#include "nds/arm9/input.h"
-#include "nds/ndstypes.h"
 #include "strings.h"
 #include "texture.h"
 #include "types.h"
@@ -9,6 +7,8 @@
 #include "input.h"
 #include "util.h"
 
+#include "nds/arm9/input.h"
+#include "nds/ndstypes.h"
 #include "nds/arm9/console.h"
 #include "nds/arm9/video.h"
 #include "nds/arm9/videoGL.h"
@@ -91,20 +91,6 @@ void state_init(state_t* state) {
 
     content_load(&state->content);
 
-    state->player.body = mesh_instance_create(
-        &state->content.molebo_mesh,
-        state->content.molebo_tex.handle,
-        POLY_ALPHA(31) | POLY_CULL_BACK | POLY_FORMAT_LIGHT0 | POLY_FORMAT_LIGHT1 |
-            POLY_TOON_HIGHLIGHT | POLY_ID(0b001000)
-    );
-
-    state->player.eyes = mesh_instance_create(
-        &state->content.molebo_eye_mesh,
-        state->content.molebo_eye_tex.handle,
-        POLY_ALPHA(31) | POLY_CULL_BACK | POLY_FORMAT_LIGHT0 | POLY_FORMAT_LIGHT1 |
-            POLY_TOON_HIGHLIGHT | POLY_ID(0b001000)
-    );
-
     state->quad_instance = (mesh_instance_t) {
         .mesh = &quad_mesh,
         .transform = {
@@ -135,6 +121,8 @@ void state_init(state_t* state) {
     );
 
     state->beach_water_instance.transform = state->beach_sand_instance.transform;
+
+    player_init(&state->player, &state->content);
 }
 
 state_t state;
@@ -169,14 +157,15 @@ int main() {
     glViewport(0, 0, 255, 191);
 
     glMatrixMode(GL_MODELVIEW);
-    glLight(0, RGB15(16, 16, 16), floattov10(-0.8), 0, floattov10(-0.6));
-    glLight(1, RGB15(16, 16, 16), 0, floattov10(-1.0), 0);
+    glLight(0, RGB15(10, 10, 10), floattov10(-0.8), 0, floattov10(-0.6));
+    glLight(1, RGB15(10, 10, 10), floattov10(0.8), 0, floattov10(0.6));
+    glLight(2, RGB15(11, 11, 11), 0, floattov10(-0.99), floattov10(-0.01));
     glMaterialf(GL_AMBIENT, RGB15(8, 8, 8));
     glMaterialf(GL_DIFFUSE, RGB15(24, 24, 24));
     glMaterialf(GL_SPECULAR, RGB15(0, 0, 0));
     glMaterialf(GL_EMISSION, RGB15(0, 0, 0));
-    glSetToonTableRange(0, 16, RGB15(18, 16, 16));
-    glSetToonTableRange(17, 24, RGB15(28, 26, 26));
+    glSetToonTableRange(0, 10, RGB15(18, 16, 16));
+    glSetToonTableRange(11, 24, RGB15(28, 26, 26));
     glSetToonTableRange(25, 31, RGB15(31, 31, 31));
 
     while (1) {
@@ -233,13 +222,13 @@ int update(state_t* state) {
     player_update(&state->player, &state->input);
 
     state->camera.position[0] =
-        lerpf(state->camera.position[0], state->player.body.transform.position[0], 0.1f);
+        lerpf(state->camera.position[0], state->player.transform.position[0], 0.1f);
     state->camera.position[1] =
-        lerpf(state->camera.position[1], state->player.body.transform.position[1] + 9.0f, 0.1f);
+        lerpf(state->camera.position[1], state->player.transform.position[1] + 9.0f, 0.1f);
     state->camera.position[2] =
-        lerpf(state->camera.position[2], state->player.body.transform.position[2] + 4.0f, 0.1f);
+        lerpf(state->camera.position[2], state->player.transform.position[2] + 8.0f, 0.1f);
 
-    state->camera.rotation[0] = 45.0f;
+    state->camera.rotation[0] = 30.0f;
 
     return 0;
 }

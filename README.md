@@ -13,3 +13,6 @@ fast_obj, used in the asset pipeline, is licensed under the [MIT license](https:
 
 ## zlib
 zlib, used in the asset pipeline, is licensed under the [zlib license](https://zlib.net/zlib_license.html)
+
+## DSMA
+dsma, used for model animation, is licensed under the [MIT license](https://github.com/AntonioND/dsma-library)

@@ -11,6 +11,7 @@
       "-ffast-math",
       "--no-standard-includes",
       "-I/home/duckonaut/repos/molebo/lib/tinf/include",
+      "-I/home/duckonaut/repos/molebo/lib/dsma",
       "-I/home/duckonaut/repos/molebo/include",
       "-I/opt/devkitpro/libnds/include",
       "-I/opt/devkitpro/libnds/include",

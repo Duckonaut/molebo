@@ -21,10 +21,10 @@ include $(DEVKITARM)/ds_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(shell basename $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	source lib/tinf/src
+SOURCES		:=	source lib/tinf/src lib/dsma
 DATA		:=	data
 ASSETS		:=	assets
-INCLUDES	:=	include lib/tinf/include
+INCLUDES	:=	include lib/tinf/include lib/dsma
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -76,6 +76,10 @@ PNGFILES	:=	$(foreach dir,$(ASSETS),$(notdir $(wildcard $(dir)/*.png)))
 OBJFILES	:=	$(foreach dir,$(ASSETS),$(notdir $(wildcard $(dir)/*.obj)))
 NRGBFILES	:= 	$(PNGFILES:.png=.nrgb)
 NMSHFILES	:= 	$(OBJFILES:.obj=.nmsh)
+MD5MESHFILES	:= 	$(foreach dir,$(ASSETS),$(notdir $(wildcard $(dir)/*.md5mesh)))
+MD5ANIMFILES	:= 	$(foreach dir,$(ASSETS),$(notdir $(wildcard $(dir)/*.md5anim)))
+DSMFILES	:= 	$(MD5MESHFILES:.md5mesh=.dsm)
+DSAFILES	:= 	$(MD5ANIMFILES:.md5anim=.dsa)
  
 #---------------------------------------------------------------------------------
 # use CXX for linking C++ projects, CC for standard C
@@ -112,7 +116,7 @@ $(BUILD):
 clean:
 	@echo clean ...
 	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).nds $(TARGET).ds.gba 
-	@rm -fr $(DATA)/*.nrgb $(DATA)/*.nmsh
+	@rm -fr $(DATA)/*.nrgb $(DATA)/*.nmsh $(DATA)/*.dsa $(DATA)/*.dsm
 	@$(MAKE) --no-print-directory -C $(CURDIR)/tools -f $(CURDIR)/tools/Makefile clean
  
  
@@ -123,7 +127,7 @@ tools:
 	@echo "Building tools"
 	@$(MAKE) --no-print-directory -C $(CURDIR)/tools -f $(CURDIR)/tools/Makefile
 
-assets: tools $(NRGBFILES) $(NMSHFILES)
+assets: tools $(NRGBFILES) $(NMSHFILES) $(DSMFILES) $(DSAFILES)
 	@echo "Assets converted"
 
 $(NRGBFILES):
@@ -133,6 +137,14 @@ $(NRGBFILES):
 $(NMSHFILES):
 	@echo "Converting OBJ to NMSH"
 	@$(foreach obj,$(OBJFILES),$(CURDIR)/tools/obj2nds-mesh $(CURDIR)/$(ASSETS)/$(obj) $(CURDIR)/$(DATA)/$(obj:.obj=.nmsh) -g;)
+
+$(DSAFILES): $(DSMFILES)
+	@echo "Converting MD5ANIM to DSA"
+	@$(foreach md5anim,$(MD5ANIMFILES),$(CURDIR)/tools/dsma/md5_to_dsma.py --anims $(CURDIR)/$(ASSETS)/$(md5anim) --name anim --output $(CURDIR)/$(DATA);)
+
+$(DSMFILES):
+	@echo "Converting MD5MESH to DSM"
+	@$(foreach md5mesh,$(MD5MESHFILES),$(CURDIR)/tools/dsma/md5_to_dsma.py --model $(CURDIR)/$(ASSETS)/$(md5mesh) --name $(md5mesh:.md5mesh=) --output $(CURDIR)/$(DATA) --texture $(shell cat $(CURDIR)/$(ASSETS)/$(md5mesh:.md5mesh=.meta)) --blender-fix;)
  
 else
  
@@ -154,6 +166,14 @@ $(OUTPUT).elf	:	$(OFILES)
 	@$(bin2o)
  
 %.nmsh.o	:	%.nmsh
+	@echo $(notdir $<)
+	@$(bin2o)
+
+%.dsa.o	:	%.dsa
+	@echo $(notdir $<)
+	@$(bin2o)
+
+%.dsm.o	:	%.dsm
 	@echo $(notdir $<)
 	@$(bin2o)
  
