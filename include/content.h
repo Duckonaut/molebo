@@ -10,6 +10,7 @@ typedef struct content {
     texture_t blank_tex;
     texture_t molebo_tex;
     texture_t molebo_eye_tex;
+    texture_t molebo_gun_tex;
     texture_t sand_tex;
     texture_t water_tex;
 } content_t;

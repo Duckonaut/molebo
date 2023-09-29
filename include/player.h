@@ -14,6 +14,7 @@ typedef struct player {
     transform_t transform;
     texture_handle body_texture;
     texture_handle eyes_texture;
+    texture_handle gun_texture;
 
     float speed;
     u32 timer;

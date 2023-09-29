@@ -2,6 +2,7 @@
 
 #include "molebo_nrgb.h"
 #include "molebo_eye_nrgb.h"
+#include "molebo_gun_nrgb.h"
 #include "mole_nmsh.h"
 #include "mole_eyes_nmsh.h"
 #include "quad_nmsh.h"
@@ -39,6 +40,7 @@ void content_load(content_t* content) {
 
     STANDARD_TEXTURE_LOAD(molebo);
     STANDARD_TEXTURE_LOAD(molebo_eye);
+    STANDARD_TEXTURE_LOAD(molebo_gun);
     STANDARD_TEXTURE_LOAD(sand);
     STANDARD_TEXTURE_LOAD(water);
 

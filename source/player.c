@@ -12,12 +12,14 @@
 
 #include "mole_rig_dsm.h"
 #include "mole_rig_eyes_dsm.h"
+#include "mole_rig_gun_dsm.h"
 #include "anim_mole_rig_base_dsa.h"
 #include "anim_mole_rig_clap_dsa.h"
 
 void player_init(player_t* player, const content_t* content) {
     player->body_texture = content->molebo_tex.handle;
     player->eyes_texture = content->molebo_eye_tex.handle;
+    player->gun_texture = content->molebo_gun_tex.handle;
 
     player->transform = (transform_t){
         .position = { 0.0f, 0.0f, 0.0f },
@@ -81,6 +83,8 @@ void player_draw(const player_t* player) {
     DSMA_DrawModel(mole_rig_dsm, anim_mole_rig_clap_dsa, player->timer);
     glBindTexture(0, player->eyes_texture);
     DSMA_DrawModel(mole_rig_eyes_dsm, anim_mole_rig_clap_dsa, player->timer);
+    glBindTexture(0, player->gun_texture);
+    DSMA_DrawModel(mole_rig_gun_dsm, anim_mole_rig_clap_dsa, player->timer);
 
     // mesh_instance_draw(&player->body);
     // mesh_instance_draw(&player->eyes);
