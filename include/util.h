@@ -1,5 +1,6 @@
 #pragma once
 
+#include "nds/arm9/trig_lut.h"
 #include "types.h"
 #include <math.h>
 inline static float lerpf(float a, float b, float t) {
@@ -35,4 +36,19 @@ static inline i16 nds_atan2i(i16 y, i16 x) {
         angle += 65536.0f;
     }
     return (i16)(angle);
+}
+
+static inline void vec3_rotate_y(vec3 v, i16 angle) {
+    float x = v[0];
+    float z = v[2];
+    float cos_angle = (cosLerp(-angle) / (float)(1 << 12));
+    float sin_angle = (sinLerp(-angle) / (float)(1 << 12));
+    v[0] = x * cos_angle - z * sin_angle;
+    v[2] = x * sin_angle + z * cos_angle;
+}
+
+static inline void vec3_add(vec3 a, vec3 b) {
+    a[0] += b[0];
+    a[1] += b[1];
+    a[2] += b[2];
 }

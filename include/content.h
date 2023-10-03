@@ -6,6 +6,7 @@ typedef struct content {
     mesh_t molebo_eye_mesh;
     mesh_t beach_sand_mesh;
     mesh_t beach_water_mesh;
+    mesh_t rocket_mesh;
 
     texture_t blank_tex;
     texture_t molebo_tex;

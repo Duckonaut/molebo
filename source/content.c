@@ -7,6 +7,7 @@
 #include "mole_eyes_nmsh.h"
 #include "quad_nmsh.h"
 #include "beach_sand_nmsh.h"
+#include "rocket_nmsh.h"
 #include "sand_nrgb.h"
 #include "beach_water_nmsh.h"
 #include "stdio.h"
@@ -52,6 +53,7 @@ void content_load(content_t* content) {
     content->molebo_eye_mesh.lit = true;
     mesh_load_nmsh(&content->beach_sand_mesh, beach_sand_nmsh, beach_sand_nmsh_size);
     mesh_load_nmsh(&content->beach_water_mesh, beach_water_nmsh, beach_water_nmsh_size);
+    mesh_load_nmsh(&content->rocket_mesh, rocket_nmsh, rocket_nmsh_size);
 }
 
 void content_unload(content_t* content) {

@@ -50,7 +50,7 @@ void amesh_instance_set_animation(amesh_instance_t* instance, u8 animation_index
     instance->blend = 1 << 12;
 }
 
-void amesh_instance_render(const amesh_instance_t* instance) {
+void amesh_instance_draw(const amesh_instance_t* instance) {
     for (int i = 0; i < instance->mesh->num_layers; i++) {
         glBindTexture(0, instance->texture_handles[i]);
         if (instance->blend > 0) {

@@ -47,6 +47,6 @@ void amesh_instance_set_animation(
     u8 animation_index
 );
 
-void amesh_instance_render(
+void amesh_instance_draw(
     const amesh_instance_t* instance
 );

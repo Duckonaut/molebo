@@ -1,6 +1,9 @@
 #include "player.h"
 #include "input.h"
+#include "projectile.h"
+#include "state.h"
 #include "stdio.h"
+#include "types.h"
 #include "util.h"
 #include "amesh.h"
 
@@ -78,6 +81,32 @@ void player_update(player_t* player, const input_t* input) {
         }
     }
 
+    if (input->just_pressed & KEY_R) {
+        vec3 rocket_pos;
+        memcpy(rocket_pos, player->transform.position, sizeof(vec3));
+
+        vec3 rocket_launcher_offset = { 1.5f, 2.0f, -0.8f };
+        // add the offset to the player's position, rotated by the player's rotation
+        vec3_rotate_y(rocket_launcher_offset, player->transform.rotation[1]);
+        vec3_add(rocket_pos, rocket_launcher_offset);
+
+        vec3 rocket_vel;
+        rocket_vel[0] = (sinLerp(player->transform.rotation[1]) / (float)(1 << 12)) * -0.2f;
+        rocket_vel[1] = 0.5f;
+        rocket_vel[2] = (cosLerp(player->transform.rotation[1]) / (float)(1 << 12)) * -0.2f;
+
+        projectile_fire(
+            &state,
+            &state.content.rocket_mesh,
+            state.content.molebo_gun_tex.handle,
+            0.5f,
+            0.02f,
+            true,
+            rocket_pos,
+            rocket_vel
+        );
+    }
+
     amesh_instance_update(&player->mesh_instance, 1 << 11);
 }
 
@@ -99,8 +128,8 @@ void player_draw(const player_t* player) {
     );
     glPolyFmt(
         POLY_ALPHA(31) | POLY_CULL_BACK | POLY_FORMAT_LIGHT0 | POLY_FORMAT_LIGHT1 |
-        POLY_FORMAT_LIGHT2 | POLY_TOON_HIGHLIGHT | POLY_ID(0b001000)
+        POLY_FORMAT_LIGHT2 | POLY_TOON_HIGHLIGHT | POLY_ID(8)
     );
 
-    amesh_instance_render(&player->mesh_instance);
+    amesh_instance_draw(&player->mesh_instance);
 }

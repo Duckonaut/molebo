@@ -6,6 +6,7 @@
 #include "player.h"
 #include "input.h"
 #include "util.h"
+#include "state.h"
 
 #include "nds/arm9/input.h"
 #include "nds/ndstypes.h"
@@ -18,8 +19,6 @@
 #include <nds.h>
 #include <stdio.h>
 #include <string.h>
-
-typedef struct state state_t;
 
 void draw_top_3d_scene(const state_t* state);
 void draw_bottom_screen(const state_t* state);
@@ -64,28 +63,6 @@ const mesh_t quad_mesh = {
     .mode = GL_QUADS,
 };
 
-typedef struct camera {
-    vec3 position;
-    vec3 rotation;
-} camera_t;
-
-typedef struct state {
-    // content
-    content_t content;
-
-    // systems
-    camera_t camera;
-    input_t input;
-
-    // instances
-    mesh_instance_t quad_instance;
-    mesh_instance_t beach_sand_instance;
-    mesh_instance_t beach_water_instance;
-
-    // molebo
-    player_t player;
-} state_t;
-
 void state_init(state_t* state) {
     bzero(state, sizeof(state_t));
 
@@ -123,11 +100,13 @@ void state_init(state_t* state) {
     state->beach_water_instance.transform = state->beach_sand_instance.transform;
 
     player_init(&state->player, &state->content);
+
+    memset(state->projectiles, 0, sizeof(state->projectiles));
 }
 
 state_t state;
 
-int main() {
+int main(void) {
     glInit();
 
     videoSetMode(MODE_0_3D);
@@ -206,20 +185,32 @@ void draw_top_3d_scene(const state_t* state) {
     // draw molebo
     player_draw(&state->player);
 
+    // draw projectiles
+    for (u16 i = 0; i < MAX_PROJECTILES; ++i) {
+        if (state->projectiles[i].active) {
+            projectile_draw(&state->projectiles[i]);
+        }
+    }
+
     glPolyFmt(POLY_ALPHA(20) | POLY_CULL_NONE);
     mesh_instance_draw(&state->beach_water_instance);
     glPolyFmt(POLY_ALPHA(31) | POLY_CULL_NONE);
 }
 
-void draw_bottom_screen(const state_t* state) {}
+void draw_bottom_screen(const state_t* state) {
+    (void)state; // unused
+}
 
 int update(state_t* state) {
     input_update(&state->input);
 
-    if (state->input.held & KEY_START)
-        return 1;
-
     player_update(&state->player, &state->input);
+
+    for (u16 i = 0; i < MAX_PROJECTILES; ++i) {
+        if (state->projectiles[i].active) {
+            projectile_update(&state->projectiles[i]);
+        }
+    }
 
     state->camera.position[0] =
         lerpf(state->camera.position[0], state->player.transform.position[0], 0.1f);
