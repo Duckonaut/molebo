@@ -4,6 +4,8 @@
       "/opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc",
       "-g",
       "-Wall",
+      "-Wextra",
+      "-Wpedantic",
       "-O2",
       "-march=armv5te",
       "-mtune=arm946e-s",
