@@ -1,5 +1,6 @@
 #pragma once
 
+#include "amesh.h"
 #include "content.h"
 #include "input.h"
 #include "mesh.h"
@@ -12,12 +13,8 @@ typedef enum player_anim_state {
 
 typedef struct player {
     transform_t transform;
-    texture_handle body_texture;
-    texture_handle eyes_texture;
-    texture_handle gun_texture;
 
-    float speed;
-    u32 timer;
+    amesh_instance_t mesh_instance;
 } player_t;
 
 void player_init(player_t* player, const content_t* content);

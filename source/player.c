@@ -2,6 +2,7 @@
 #include "input.h"
 #include "stdio.h"
 #include "util.h"
+#include "amesh.h"
 
 #include "nds/input.h"
 #include "nds/arm9/trig_lut.h"
@@ -14,17 +15,33 @@
 #include "mole_rig_eyes_dsm.h"
 #include "mole_rig_gun_dsm.h"
 #include "anim_mole_rig_base_dsa.h"
+#include "anim_mole_rig_walk_dsa.h"
 #include "anim_mole_rig_clap_dsa.h"
 
+const static amesh_t s_mole_rig = {
+    .num_layers = 3,
+    .mesh_layers = { mole_rig_dsm, mole_rig_eyes_dsm, mole_rig_gun_dsm },
+    .num_animations = 2,
+    .animations = { { .animation_data = anim_mole_rig_base_dsa, .num_frames = 40 },
+                    { .animation_data = anim_mole_rig_walk_dsa, .num_frames = 20 },
+                    { .animation_data = anim_mole_rig_clap_dsa, .num_frames = 16 } },
+};
+
 void player_init(player_t* player, const content_t* content) {
-    player->body_texture = content->molebo_tex.handle;
-    player->eyes_texture = content->molebo_eye_tex.handle;
-    player->gun_texture = content->molebo_gun_tex.handle;
+    amesh_instance_init(
+        &player->mesh_instance,
+        &s_mole_rig,
+        (texture_handle[]){ content->molebo_tex.handle,
+                            content->molebo_eye_tex.handle,
+                            content->molebo_gun_tex.handle },
+        3
+    );
+    amesh_instance_set_animation(&player->mesh_instance, 1);
 
     player->transform = (transform_t){
         .position = { 0.0f, 0.0f, 0.0f },
         .rotation = { 0.0f, 0.0f, 0.0f },
-        .scale = { 2.0f, 2.0f, 2.0f },
+        .scale = { 1.0f, 1.0f, 1.0f },
     };
 }
 
@@ -52,9 +69,16 @@ void player_update(player_t* player, const input_t* input) {
         iprintf("\x1b[16;0H        \n");
         iprintf("\x1b[16;0H%d\n", target_angle);
         player->transform.rotation[1] = nds_anglelerp(current_angle, target_angle, 0.1f);
+        if (player->mesh_instance.current_animation != 1) {
+            amesh_instance_set_animation(&player->mesh_instance, 1);
+        }
+    } else {
+        if (player->mesh_instance.current_animation != 0) {
+            amesh_instance_set_animation(&player->mesh_instance, 0);
+        }
     }
 
-    player->timer = (((player->timer >> 12) + 1) % 16) << 12;
+    amesh_instance_update(&player->mesh_instance, 1 << 11);
 }
 
 void player_draw(const player_t* player) {
@@ -73,19 +97,10 @@ void player_draw(const player_t* player) {
         player->transform.scale[1],
         player->transform.scale[2]
     );
-    glBindTexture(0, player->body_texture);
     glPolyFmt(
         POLY_ALPHA(31) | POLY_CULL_BACK | POLY_FORMAT_LIGHT0 | POLY_FORMAT_LIGHT1 |
         POLY_FORMAT_LIGHT2 | POLY_TOON_HIGHLIGHT | POLY_ID(0b001000)
     );
-    // mesh_draw(player->body.mesh);
 
-    DSMA_DrawModel(mole_rig_dsm, anim_mole_rig_clap_dsa, player->timer);
-    glBindTexture(0, player->eyes_texture);
-    DSMA_DrawModel(mole_rig_eyes_dsm, anim_mole_rig_clap_dsa, player->timer);
-    glBindTexture(0, player->gun_texture);
-    DSMA_DrawModel(mole_rig_gun_dsm, anim_mole_rig_clap_dsa, player->timer);
-
-    // mesh_instance_draw(&player->body);
-    // mesh_instance_draw(&player->eyes);
+    amesh_instance_render(&player->mesh_instance);
 }
